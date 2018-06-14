@@ -230,7 +230,7 @@ class Classify_OCSVM:
             clf = svm.OneClassSVM(nu=the_nu, kernel="rbf", gamma=the_gamma)
             #训练
             clf.fit(trainD_dic[key])
-            module_Name = key+"_model.m"
+            module_Name = '../modle/'+ key+"_model.m"
             #保存
             joblib.dump(clf, module_Name)
 
@@ -239,7 +239,7 @@ class Classify_OCSVM:
         for key in testD_dic:
             testD_dic[key]
             #从文件中读取模型进行预测
-            module_Name = key+"_model.m"
+            module_Name = '../modle/'+key+"_model.m"
             clf = joblib.load(module_Name)
             #进行预测
             y_pred_test = clf.predict(testD_dic[key])
