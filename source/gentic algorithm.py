@@ -1,7 +1,7 @@
 import math
 import random
 import matplotlib.pyplot as plt
-import classify_OCSVM as cls
+import source.classify_OCSVM as cls
 
 
 # 随机生成二进制编码

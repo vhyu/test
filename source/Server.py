@@ -1,10 +1,10 @@
 #! python2
 import socketserver
-from classify_OCSVM import classify_OCSVM
+import source.classify_OCSVM as classfiy_OCS
 #from keras.models import load_model
 import time
 
-cls = classify_OCSVM('test')
+cls = classfiy_OCS('test')
 #cls.test_model()
 
 class TCPhandler(socketserver.BaseRequestHandler):
