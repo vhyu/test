@@ -151,32 +151,7 @@ class Classify_OCSVM:
     # 将每一条记录存储在数组中
     # 将数组转换成矩阵
     def myDataReshap(self,dic_operas):
-        key = ['Avg_Pressure','Numbers','Start_x','End_y','Start_y','End_y']
-        i = 0
-        # trainData = []
-        # while i < len(key):
-        #     tmp = key[i]
-        #     if (i<=1):
-        #         num = [x[tmp] for x in operation_data]
-        #         j = 0
-        #         if (max(num) - min(num)) != 0:
-        #             for j in range(len(operation_data)):
-        #                 trainData[i].append((operation_data[j][tmp] - min(num)) / (max(num) - min(num)))
-        #         else:
-        #             for j in range(len(operation_data)):
-        #                 trainData[i].append(0)
-        #     if(2<=i<=3):
-        #         j= 0
-        #         for j in range(len(operation_data)):
-        #             trainData[i].append(operation_data[j]['Start_x'] / 1080)
-        #             trainData[i].append(operation_data[j]['End_x'] / 1080)
-        #     else:
-        #         j=0
-        #         for j in range(len(operation_data)):
-        #             trainData[i].append(operation_data[j]['Start_y'] / 1780)
-        #             trainData[i].append(operation_data[j]['End_y'] / 1780)
 
-        # 相同的功能
         pid_trainData_dic = dict.fromkeys(dic_operas.keys())
         for key in dic_operas:
             operation_data = dic_operas[key]
