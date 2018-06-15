@@ -1,36 +1,66 @@
-#! python3
-import random
-from sklearn import svm
-import numpy as np
-import matplotlib.pyplot as plt
-import matplotlib.font_manager
 import csv
-import sys
-# from keras.models import Sequential
-# from keras.layers import LSTM, Activation, Dense, Dropout
-# from keras.optimizers import Adam
-import simplejson as json
-import datetime
 import copy
-# import keras
-# from keras.models import load_model
+import datetime
 
-import matplotlib.pyplot as plt
-import operator
-from functools import reduce
+class csvDataPrc():
+    csvFilePath = ''
+    csvR = [] #csv文件经过处理得到，一个点击数据的dic
+    fileR = [] #csvR信息经过处理得到,一个动作数据的dic
+    dataR = [] #fileR信息经过处理得到，一个归一化后的数据集的dic
+    def __init__(self,the_FP):
+        self.csvFilePath = the_FP
 
-from sklearn.externals import joblib
+    #读取csv文件，并将每一行的数据进行处理，得到的是每一个pid对应的点击信息的集合
+    #返回一个dictionary，其中的键值是一个点击信息的数组
+    def CSVResolve(self):
+        with open(self.csvFilePath, "r", encoding="utf-8") as f:
+            reader = csv.reader(f)
+            rows = [row for row in reader]
 
-TIME_STEPS = 4
-file_len = 0
+        clicks_info = []
+        last_PID = rows[0][4]
+        pid_values = []
+        pid_values.append(last_PID)
+        for row in rows:
+            # 创建字典（区分APPID，其实就是进程的id）
+            aClick = dict.fromkeys(['Time', 'x', 'y', 'pressure', 'total_seconds', 'process_id'], 0)
+            aClick['Time'] = datetime.datetime.strptime(row[1], "%Y-%m-%d %H:%M:%S")
+            vali = 0
+            if row[4] not in pid_values:
+                pid_values.append(row[4])
 
-class Classify_OCSVM:
+            aClick['process_id'] = row[4]
 
-    def FileResolve(self,Filepath):# 合并一秒也就是视为一个动作的数据（number个点来构成）
-        # with open(Filepath, 'r') as load_f:
+            if row[3] == 'ABS_MT_PRESSURE':
+                aClick['pressure'] = int(row[2])
+                vali = 1
+            elif row[3] == 'ABS_MT_POSITION_X':
+                aClick['x'] = int(row[2])
+                vali = 1
+            elif row[3] == 'ABS_MT_POSITION_Y':
+                aClick['y'] = int(row[2])
+                vali = 1
 
-        pid_clicks_dic = self.CSVResolve(Filepath)
-        pid_opers_dic = dict.fromkeys(pid_clicks_dic.keys(),0)
+            if vali:
+                clicks_info.append(aClick)
+
+            # last_PID存储上一条记录的ProcessID
+            last_PID = row[4]
+        pids_dics = dict.fromkeys(pid_values, 0)
+        for key in pids_dics:
+            tmp_pid_dic = []
+            for i in range(len(clicks_info)):
+                if clicks_info[i]['process_id'] == key:
+                    tmp_pid_dic.append(copy.deepcopy(clicks_info[i]))
+            pids_dics[key] = tmp_pid_dic
+        self.csvR = pids_dics
+
+    #将从csv中读取到的点击信息的dic数组进行处理
+    #得到的是每一个动作的数据的集合
+    #返回的是一个dictionary，键对应的是pid,值对应的是数组，每一个数组是operation的集合
+    def FileResolve(self):  # 合并一秒也就是视为一个动作的数据（number个点来构成）
+        pid_clicks_dic = self.csvR
+        pid_opers_dic = dict.fromkeys(pid_clicks_dic.keys(), 0)
         for key in pid_clicks_dic:
             click_info = pid_clicks_dic[key]
             operation_info = []
@@ -56,7 +86,7 @@ class Classify_OCSVM:
                         cou_pressure = cou_pressure + 1
                         tot_pressure = tot_pressure + click_info[End_click]['pressure']
 
-                #one_operation表示一个操作的数据信息
+                # one_operation表示一个操作的数据信息
                 one_operation = dict.fromkeys(
                     ['Time', 'Start_x', 'Start_y', 'End_x', 'End_y', 'Avg_Pressure', 'Duration', 'numbers'], 0)
                 one_operation['Duration'] = (
@@ -86,72 +116,21 @@ class Classify_OCSVM:
                 else:
                     one_operation['Avg_Pressure'] = 0
                 one_operation['Numbers'] = End_click
-                #operation_info 表示的是一个pid中对应的所有的operation的集合
+                # operation_info 表示的是一个pid中对应的所有的operation的集合
                 operation_info.append(copy.deepcopy(one_operation))
                 i = End_click + 1
-            #得到每一个pid对应的one_operation(也就是得到每一个pid对应的不同的操作)
-            #返回的是一个关于操作们的数组
+            # 得到每一个pid对应的one_operation(也就是得到每一个pid对应的不同的操作)
+            # 返回的是一个关于操作们的数组
             pid_opers_dic[key] = operation_info
-        return pid_opers_dic
+        self.fileR = pid_opers_dic
 
-    # 找到这一条记录中的数据
-    def CSVResolve(self,filepath):
-        with open(filepath, "r", encoding="utf-8") as f:
-            reader = csv.reader(f)
-            rows = [row for row in reader]
+        # 找到这一条记录中的数据
 
-        clicks_info = []
-        # tmp = []
-        # for row in rows:
-        #     if row != []:
-        #         tmp.append(row)
-
-        last_PID = rows[0][4]
-        pid_values = []
-        pid_values.append(last_PID)
-        for row in rows:
-            # 创建字典（区分APPID，其实就是进程的id）
-            aClick = dict.fromkeys(['Time', 'x', 'y', 'pressure', 'total_seconds','process_id'], 0)
-            aClick['Time'] = datetime.datetime.strptime(row[1], "%Y-%m-%d %H:%M:%S")
-            vali = 0
-            if row[4] not in pid_values:
-                pid_values.append(row[4])
-
-            aClick['process_id'] = row[4]
-
-            if row[3] == 'ABS_MT_PRESSURE':
-                aClick['pressure'] = int(row[2])
-                vali = 1
-            elif row[3] == 'ABS_MT_POSITION_X':
-                aClick['x'] = int(row[2])
-                vali = 1
-            elif row[3] == 'ABS_MT_POSITION_Y':
-                aClick['y'] = int(row[2])
-                vali = 1
-
-            if vali:
-                clicks_info.append(aClick)
-
-            #last_PID存储上一条记录的ProcessID
-            last_PID = row[4]
-
-
-        pids_dics = dict.fromkeys(pid_values,0)
-
-        for key in pids_dics:
-            tmp_pid_dic = []
-            for i in range(len(clicks_info)):
-                if clicks_info[i]['process_id'] == key:
-                    tmp_pid_dic.append(copy.deepcopy(clicks_info[i]))
-            pids_dics[key] = tmp_pid_dic
-
-        return pids_dics
-
-    # 首先将一些值进行转换，归一化（x,y的坐标，平均压力）
-    # 将每一条记录存储在数组中
-    # 将数组转换成矩阵
-    def myDataReshap(self,dic_operas):
-
+        # 首先将一些值进行转换，归一化（x,y的坐标，平均压力）
+        # 将每一条记录存储在数组中
+        # 将数组转换成矩阵
+    def DataReshap(self):
+        dic_operas = self.fileR
         pid_trainData_dic = dict.fromkeys(dic_operas.keys())
         for key in dic_operas:
             operation_data = dic_operas[key]
@@ -193,39 +172,10 @@ class Classify_OCSVM:
             for i in range(len(operation_data)):
                 trainData.append([Numbers[i], pre[i], sx[i], sy[i], ex[i], ey[i]])
             pid_trainData_dic[key] = trainData
+        self.dataR = pid_trainData_dic
 
-        return pid_trainData_dic
-
-    def rtn_error(self,the_nu,the_gamma):
-        # 获取训练集
-        operinfo = self.FileResolve('../data/train.csv')
-        trainD_dic = self.myDataReshap(operinfo)
-
-        for key in trainD_dic:
-            clf = svm.OneClassSVM(nu=the_nu, kernel="rbf", gamma=the_gamma)
-            #训练
-            clf.fit(trainD_dic[key])
-            module_Name = '../modle/'+ key+"_model.m"
-            #保存
-            joblib.dump(clf, module_Name)
-
-        testD_dic = self.myDataReshap(self.FileResolve('../data/my_Test.csv'))
-        pre_Res_dic = dict.fromkeys(testD_dic.keys(),0)
-        for key in testD_dic:
-            testD_dic[key]
-            #从文件中读取模型进行预测
-            module_Name = '../modle/'+key+"_model.m"
-            clf = joblib.load(module_Name)
-            #进行预测
-            y_pred_test = clf.predict(testD_dic[key])
-
-            #预测结果
-            n_error_test = y_pred_test[y_pred_test == -1].size
-            print('\n错误的个数:',n_error_test,'总的个数：',len(testD_dic[key]),'准确率的结果是:',1-(n_error_test/len(testD_dic[key])))
-            pre_Res_dic[key] = 1-(n_error_test/len(testD_dic[key]))
-        return pre_Res_dic
-
-if __name__ == '__main__':
-
-    cls_OCSVM = Classify_OCSVM()
-    print(cls_OCSVM.rtn_error(0.03,4))
+    def set(self):
+        self.CSVResolve()
+        self.FileResolve()
+        self.DataReshap()
+        return self.dataR#返回的是一个可以进行训练的数据集

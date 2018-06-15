@@ -1,8 +1,14 @@
 import math
 import random
 import matplotlib.pyplot as plt
-import source.classify_OCSVM as cls
+from source.csvDataPrc import csvDataPrc as csvDP
+from source.Class_fit import class_fit as cfit
 
+#得到的是一个数据集的dictionary
+myTrainCsvDP = csvDP('../data/train.csv')
+myTrainCsvDP = myTrainCsvDP.set()
+myTestCsvDP = csvDP('../data/my_Test.csv')
+myTestCsvDP = myTestCsvDP.set()
 
 # 随机生成二进制编码
 # chrom_length 的长度表示的是两个参数的二进制连接起来的长度
@@ -40,8 +46,8 @@ def decodechrom(pop, chrom_length, chrom_nu, chrom_gamma):
     return temp
 
 
-# 计算预测值（将各个个体的基因其实就是那两个参数的编码，） 这个需要将我的适应度函数作为参数传进来
-def calobjValue(pop, chrom_length, chrom_nu, chrom_gamma):
+# 计算预测值（将各个个体的基因其实就是那两个参数的编码)
+def calobjValue(pop, chrom_length, chrom_nu, chrom_gamma,TrainD,TestD,pid):
     obj_value = []
     temp_deco = decodechrom(pop, chrom_length, chrom_nu, chrom_gamma)
     for i in range(len(temp_deco)):  # temp1的长度和种群的个数是一致的
@@ -50,8 +56,10 @@ def calobjValue(pop, chrom_length, chrom_nu, chrom_gamma):
         # gamma的范围是（0，10）对应的长度应该是：10^3*（10-0） = 10^4 = 2^13
         the_nu = 0 + temp_deco[i][0] * ((1 - (0)) / (math.pow(2, chrom_nu) - 1))
         the_gamma = 0 + temp_deco[i][1] * ((10 - (0)) / (math.pow(2, chrom_gamma) - 1))
-        obj_value.append(cls.rtn_error(the_nu, the_gamma))
+        cls_Fit = cfit(the_nu, the_gamma, TrainD, TestD, pid)
+        obj_value.append(cls_Fit.pred(cls_Fit.fit()))
     return obj_value
+
 
 
 # 淘汰
@@ -62,7 +70,7 @@ def calfitValue(obj_value):
         if obj_value[i] > c_min:
             temp = obj_value[i]
         else:
-            temp = 0.0
+            temp = 0.01
         fit_value.append(temp)
     return fit_value
 
@@ -182,33 +190,39 @@ pm = 0.2  # 变异概率
 results = []  # 存储每一代的最优解，N个二元组
 fit_value = []  # 个体适应度
 fit_mean = []  # 平均适应度
-num_Iterative = 15#迭代的次数
+num_Iterative = 10#迭代的次数
 
 # pop = [[0, 1, 0, 1, 0, 1, 0, 1, 0, 1] for i in range(pop_size)]
 pop = geneEncoding(pop_size, chrom_length)
 
-#for的循环次数就是迭代的次数
-# 迭代的次数，也就是选择最优解的次数
-for i in range(num_Iterative):
-    obj_value = calobjValue(pop, chrom_length, chrom_nu, chrom_gamma)  # 得到全部的个体评价
-    fit_value = calfitValue(obj_value)  # 淘汰
-    best_individual, best_fit = best(pop, fit_value)
-    # 第一个存储最优的解, 第二个存储最优基因
-    results.append([best_fit, b2d(best_individual, max_value, chrom_length)])
-    selection(pop, fit_value)  # 新种群复制
-    crossover(pop, pc)  # 交配
-    mutation(pop, pm)  # 变异
-    print ('第', i, '次迭代\n')
+for key in myTestCsvDP:
+    # for的循环次数就是迭代的次数
+    # 迭代的次数，也就是选择最优解的次数
+    for i in range(num_Iterative):
+        obj_value = calobjValue(pop, chrom_length, chrom_nu, chrom_gamma,myTrainCsvDP[key],myTestCsvDP[key],key)  # 得到全部的个体评价
+        fit_value = calfitValue(obj_value)  # 淘汰
+        best_individual, best_fit = best(pop, fit_value)
+        # 第一个存储最优的解, 第二个存储最优基因
+        results.append([best_fit, b2d(best_individual, max_value, chrom_length)])
+        selection(pop, fit_value)  # 新种群复制
+        crossover(pop, pc)  # 交配
+        mutation(pop, pm)  # 变异
 
-results = results[1:]
-results.sort()
+    results = results[1:]
+    results.sort()
 
-X = []
-Y = []
-for i in range(len(results)):
-    X.append(i)
-    t = results[i][0]
-    Y.append(t)
+    X = []
+    Y = []
+    for i in range(len(results)):
+        X.append(i)
+        t = results[i][0]
+        Y.append(t)
 
-plt.plot(X, Y)
-plt.show()
+    plt.plot(X, Y)
+    plt.title(key)
+    plt.savefig('../result_pngs/'+key + '.png')
+    plt.show()
+    # 保存的一片空白，其实产生这个现象的原因很简单：
+    # 在plt.show()后调用了plt.savefig() ，
+    # 在plt.show()后实际上已经创建了一个新的空白的图片（坐标轴），
+    # 这时候你再plt.savefig()就会保存这个新生成的空白图片。
