@@ -8,7 +8,7 @@ class class_fit:
     the_testD = [] #传进来的是一个数组
     the_pid = ''
 
-    def __init__(self,nu,gamma,trainD,testD,pid):
+    def __init__(self,trainD,testD,pid,nu = 0.5,gamma = 1/6):
         self.the_nu = nu
         self.the_gamma = gamma
         self.the_trainD = trainD
@@ -19,13 +19,14 @@ class class_fit:
     def fit(self):
         clf = svm.OneClassSVM(nu = self.the_nu, kernel="rbf", gamma=self.the_gamma)
         clf.fit(self.the_trainD)
-        return clf
-    def saveM(self,clf):
-        module_Name = '../modle/' + self.the_pid + "_model.m"
-        joblib.jump(clf,module_Name)
 
-    def loadM(self):
-        module_Name = '../modle/' + self.the_pid + "_model.m"
+        return clf
+    def saveM(self,clf,module_path):
+        module_Name = '../'+module_path +'/'+ self.the_pid + "_model.m"
+        joblib.dump(clf,module_Name)
+
+    def loadM(self,module_path):
+        module_Name = '../'+module_path+'/' + self.the_pid + "_model.m"
         clf = joblib.load(module_Name)
         return clf
 
