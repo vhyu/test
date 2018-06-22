@@ -49,7 +49,8 @@ class TCPhandler(socketserver.BaseRequestHandler):
                 file.write(rdata)
             file.close()
             print('receive done')
-
+            msg = 'recv is OK,the server send msg to client!'
+            self.request.send(msg.encode(encoding='utf-8'))
         # # infinite loop
         # while True:
         #     # get user_id and file_length
@@ -89,3 +90,5 @@ class TCPhandler(socketserver.BaseRequestHandler):
 if __name__ == '__main__':
     server = socketserver.ThreadingTCPServer((HOST, PORT), TCPhandler)
     server.serve_forever()
+
+#下一步：从安卓上发送文件、接口并接收训练的数据文件并保存文件
