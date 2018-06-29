@@ -4,7 +4,7 @@ import datetime
 
 class csvDataPrc():
     csvFilePath = ''
-    csvR = [] #csv文件经过处理得到，一个点击数据的dic
+    csvR = [] #csv文件经过处理得到，一个点击数据的dic,dic用pid作为其key值
     fileR = [] #csvR信息经过处理得到,一个动作数据的dic
     dataR = [] #fileR信息经过处理得到，一个归一化后的数据集的dic
     def __init__(self,the_FP):
