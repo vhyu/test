@@ -1,20 +1,26 @@
 # -*- coding: UTF-8 -*-
 #! python36
-#在Python2中是首字母小写的
+#在Python2中是首字母大写的
 import socketserver
-#from keras.models import load_model
 import time
 import socket, struct, os
-
-#cls = classfiy_OCS('test')
-#cls.test_model()
-
+from sklearn import svm
+from sklearn.externals import joblib
+import csv
+from source.csvDataPrc import csvDataPrc as csvDP
+from source.gentic_algorithm import GA as ga
+# from source.gentic_algorithm import *
 #服务器ip地址
 HOST = '202.199.6.212'
 #服务器端口
-PORT = 2047
+PORT = 2048
 
 class TCPhandler(socketserver.BaseRequestHandler):
+    # LastPid = 'lasePid'
+    # flag=True
+    Pre_currentRecord=0
+    Train_currentRecord= 0
+    res = 'legal'
     def handle(self):
         print("\033[0;31m%s\033[0m" % "Connected by", self.client_address)
         print('connected from:', self.client_address)
@@ -58,38 +64,118 @@ class TCPhandler(socketserver.BaseRequestHandler):
         #接收消息
         while True:
             # get user_id and file_length
+            # len,userid,Touch,2018-06-04 09:31:23,0,SYN_REPORT,cn.nubia.launcher
             self.header = self.request.recv(1024)
             print(self.header)
             self.header = self.header.decode()
-            self.header = self.header.split('\r\n')
-            filelen = int(self.header[0])
+            self.header = self.header.split(',')
+            recordlen = int(self.header[0])
             userid = self.header[1]
-
+            record = self.header[2]+','+self.header[3]+','+self.header[4]+','+self.header[5]+','+self.header[6]
             # ACK
-            self.request.send("header ok\r\n".encode())
-            print("\033[0;31m%s\033[0m" % "    Header ok", filelen,
-                  "  userid", userid)
+            # self.request.send("header ok\r\n".encode())
+            # print("\033[0;31m%s\033[0m" % "    Header ok", recordlen,
+            #       "  userid", userid)
 
-            # receive file data
-            file = bytes()
-            while filelen > 0:
-                data = self.request.recv(8192)
-                filelen -= len(data)
-                file = file + data
-            print("the file is :",file," !!!!")
-            print(time.strftime('%Y-%m-%d %H:%M:%S'), "file recv finished")
-            # save file
-            tfile = open(userid + '.csv', 'a+')
-            tfile.write(file.decode())
-            tfile.close()
+            print("the record is :",record," !!!!")
+            print(time.strftime('%Y-%m-%d %H:%M:%S'), "record recv finished")
+            #获取当前记录的PId
+            recordList = record.split(',')#将pid后边的空格去掉
+            print(recordList)
+            Pid = recordList[4]
+            # 提取出pid
+            Pid = Pid.replace("\r\n","")
+            print('Pid is :',Pid)
+            record = record+'\r\n'
+            # # 第一次获取到LastPid,只做一次
+            # if (self.flag):
+            #     self.flag = False
+            #     self.LastPid= Pid
+            # 记录上一条pid
 
-            # get predict res
-            # res = cls.predict()
-            res= 'illegal user'
-            print("res:", "\033[0;31m%s\033[0m" % res)
-            res = res + "\r\n"
+            # 判断相关目录是否存在
+            if not os.path.exists('../'+userid+'_best_modles/'):
+                os.makedirs('../'+userid+'_best_modles/')
+            if not os.path.exists('../'+userid+'_predict_files/'):
+                os.makedirs('../'+userid+'_predict_files/')
+            if not os.path.exists('../'+userid+'_train_files/'):
+                os.makedirs('../'+userid+'_train_files/')
+            if not os.path.exists('../'+userid+'_Valiable_dataFiles/'):
+                os.makedirs('../'+userid+'_Valiable_dataFiles/')
+
+            # 判断是否有Pid对应的模型
+            module_file = '../'+userid+'_best_modles/'+Pid+'_model.m'
+            predictFlieName = '../' + userid + '_predict_files/' + Pid + '.csv'
+            trainFileName = '../' + userid + '_train_files/' + Pid + '.csv'
+            print(module_file)
+
+            if(os.path.exists(module_file)):
+                #     模型存在，进行预测
+                print("module 存在")
+                # 获取当前文件的行数
+                predict_file = open(predictFlieName,'a+')
+                self.Pre_currentRecord = len(predict_file.readline())
+                #   判断是否满足预测的文件的要求（达到8条数据或是上一条pid与本次pid不同）
+                if(self.Pre_currentRecord>=8):
+                    print("进行预测")
+                    #    将预测集文件传入
+                    # 对预测集文件进行处理,得到数据集
+                    myTestCsvDP = csvDP(predictFlieName)
+                    myTestCsvDP = myTestCsvDP.set()
+
+                    # 调用模型进行相应的预测
+                    clf = joblib.loadM(module_file)
+                    fina_result = clf.predict(myTestCsvDP)
+                    print('fina_result')
+                    print(fina_result)
+                    self.Pre_currentRecord = 0
+                    predictFlieName.seek(0)
+                    predictFlieName.truncate()   #清空文件
+                    if(fina_result == -1):
+                        self.res = 'illegal'
+                #    预测完成后将文件清空
+                        predict_file.truncate()
+                else:
+                    # 预测集没有达到符合的大小
+                    print("追加到预测集文件中")
+                    predict_file.write(record)
+                predict_file.close()
+            else:
+                #模型不存在，进行训练
+                print('module no exist')
+                # 从当前的训练集文件中加载record数目
+                train_file = open(trainFileName,'a+')
+                self.Train_currentRecord = len(train_file.readlines())
+                train_file.close()
+                # 判断训练集的个数，达到2000条开始训练
+                print(self.Train_currentRecord)
+                if(self.Train_currentRecord>2000):
+                    #开始训练
+                    print('开始训练')
+                    print('保存模型')
+                    # 对数据进行处理，得到真正的数据集CSVData
+                    print('对record进行处理得到数据集data')
+                    Val_data = csvDP(trainFileName)
+                    Valiable_Data = Val_data.set()
+                    # 将数据集划分成TrainD和TestD ，留出法，随机的选择百分之30作为测试集
+                    print('将数据集用“留出法”来进行处理，划分成训练集和测试集')
+                    TrainD = Valiable_Data[0,100]
+                    TestD = Valiable_Data[100:]
+                    # 调用GA_OCSVM
+                    theGa=ga(TrainD,TestD,userid,Pid)
+                    # 训练并保存模型
+                    theGa.funGA(20,0.5,0.6,100)
+                    print("训练以及保存模型")
+                else:
+                    #追加到训练集中
+                    train_file = open(trainFileName, 'a+')
+                    train_file.write(record)
+                    print("追加到训练集数据")
+                    train_file.close()
+
+            print("res_respond:", "\033[0;31m%s\033[0m" % self.res)
             #send the predict_results
-            self.request.send(res.encode())
+            self.request.send((self.res).encode())
             print("send is ok!!!!")
 
 if __name__ == '__main__':

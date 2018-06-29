@@ -1,0 +1,4 @@
+flag=True
+Pre_currentRecord=0
+LastPid='Pid'
+#only do once ,开始的时候得到LastPid

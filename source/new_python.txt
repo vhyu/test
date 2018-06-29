@@ -1,0 +1,4 @@
+numpy����д����
+
+��csv�ļ���ȡ���ݵ�������
+my_matrix = numpy.loadtxt(open("c:\\1.csv","rb"),delimiter=",",skiprows=0)  
