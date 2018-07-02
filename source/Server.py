@@ -112,7 +112,7 @@ class TCPhandler(socketserver.BaseRequestHandler):
             if(os.path.exists(module_file)):
                 #     模型存在，进行预测
                 print("module 存在")
-                # 获取当前文件的行数
+                # 获取当前文件的行数!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!一直是0
                 predict_file = open(predictFlieName,'a+')
                 self.Pre_currentRecord = len(predict_file.readline())
                 #   判断是否满足预测的文件的要求（达到8条数据或是上一条pid与本次pid不同）

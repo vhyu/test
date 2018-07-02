@@ -19,8 +19,7 @@ class csvDataPrc():
         clicks_info = []
         for row in rows:
             # 创建字典
-            aClick = dict.fromkeys(['Time', 'x', 'y', 'pressure', 'total_seconds', 'process_id'], 0)
-            print("@@@@")
+            aClick = dict.fromkeys(['Time', 'x', 'y', 'pressure', 'total_seconds', 'process_id','btn_tool_finger'], 0)
             aClick['Time'] = datetime.datetime.strptime(row[1], "%Y-%m-%d %H:%M:%S")
             vali = 0
 
@@ -35,6 +34,9 @@ class csvDataPrc():
             elif row[3] == 'ABS_MT_POSITION_Y':
                 aClick['y'] = int(row[2])
                 vali = 1
+            elif  row[3] == 'BTN_TOOL_FINGER':
+                aClick['btn_tool_finger'] = row[2]
+                vali=1
             if vali:
                 clicks_info.append(aClick)
         self.csvR = clicks_info
@@ -57,8 +59,11 @@ class csvDataPrc():
                 cou_pressure = cou_pressure + 1
                 tot_pressure = tot_pressure + click_info[Start_click]['pressure']
             # 合并操作
-            while End_click + 1 < len(click_info) and (  # 由于下边这个操作，所以到值得到的duration一定是1，因为time这个字段是以秒为单位，现在需要的是获得毫秒就好了
-                click_info[End_click + 1]['Time'] - click_info[Start_click]['Time']).total_seconds() <= 1:
+            # while End_click + 1 < len(click_info) and (  # 由于下边这个操作，所以到值得到的duration一定是1，因为time这个字段是以秒为单位，现在需要的是获得毫秒就好了
+            #     click_info[End_click + 1]['Time'] - click_info[Start_click]['Time']).total_seconds() <= 1:
+            # 现在获取到的就是毫秒级的
+            # 由于下边这个操作，所以到值得到的duration一定是1，因为time这个字段是以秒为单位，现在需要的是获得毫秒就好了
+            while End_click + 1 < len(click_info) and (click_info[End_click + 1]['btn_tool_finger'] == "UP" and click_info[Start_click]['btn_tool_finger']=="DOWN"):
                 End_click = End_click + 1
                 if End_click == len(click_info) - 1:
                     break
