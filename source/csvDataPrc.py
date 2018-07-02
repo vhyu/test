@@ -19,10 +19,10 @@ class csvDataPrc():
         clicks_info = []
         for row in rows:
             # 创建字典
-            aClick = dict.fromkeys(['Time', 'x', 'y', 'pressure', 'total_seconds', 'process_id','btn_tool_finger'], 0)
+            aClick = dict.fromkeys(['Time', 'x', 'y', 'pressure', 'total_seconds', 'process_id','event_type','fingers'], 0)
             aClick['Time'] = datetime.datetime.strptime(row[1], "%Y-%m-%d %H:%M:%S")
             vali = 0
-
+            aClick['fingers'] = 0
             aClick['process_id'] = row[4]
 
             if row[3] == 'ABS_MT_PRESSURE':
@@ -34,9 +34,11 @@ class csvDataPrc():
             elif row[3] == 'ABS_MT_POSITION_Y':
                 aClick['y'] = int(row[2])
                 vali = 1
-            elif  row[3] == 'BTN_TOOL_FINGER':
-                aClick['btn_tool_finger'] = row[2]
+            elif row[3] == 'BTN_TOOL_FINGER':
+                aClick['event_type'] = row[2]
                 vali=1
+            elif row[3] == 'ABS_MT_SLOT':
+                aClick['fingers'] = 1
             if vali:
                 clicks_info.append(aClick)
         self.csvR = clicks_info
@@ -63,7 +65,7 @@ class csvDataPrc():
             #     click_info[End_click + 1]['Time'] - click_info[Start_click]['Time']).total_seconds() <= 1:
             # 现在获取到的就是毫秒级的
             # 由于下边这个操作，所以到值得到的duration一定是1，因为time这个字段是以秒为单位，现在需要的是获得毫秒就好了
-            while End_click + 1 < len(click_info) and (click_info[End_click + 1]['btn_tool_finger'] == "UP" and click_info[Start_click]['btn_tool_finger']=="DOWN"):
+            while End_click + 1 < len(click_info) and (click_info[End_click + 1]['event_type'] == "UP" and click_info[Start_click]['btn_tool_finger']=="DOWN"):
                 End_click = End_click + 1
                 if End_click == len(click_info) - 1:
                     break
@@ -74,7 +76,7 @@ class csvDataPrc():
 
             # one_operation表示一个操作的数据信息
             one_operation = dict.fromkeys(
-                    ['Time', 'Start_x', 'Start_y', 'End_x', 'End_y', 'Avg_Pressure', 'Duration', 'numbers'], 0)
+                    ['Time', 'Start_x', 'Start_y', 'End_x', 'End_y', 'Avg_Pressure', 'Duration', 'numbers','fingers'], 0)
             one_operation['Duration'] = (
                     click_info[End_click]['Time'] - click_info[Start_click]['Time']).total_seconds()
             one_operation['Time'] = click_info[Start_click]['Time']
@@ -102,6 +104,7 @@ class csvDataPrc():
             else:
                 one_operation['Avg_Pressure'] = 0
             one_operation['Numbers'] = End_click
+            one_operation['fingers'] = click_info[Start_click]['fingers']
             # operation_info 表示的是一个pid中对应的所有的operation的集合
             operation_info.append(copy.deepcopy(one_operation))
             i = End_click + 1
