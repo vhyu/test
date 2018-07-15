@@ -58,7 +58,7 @@ class GA:
         return temp
 
     #--------------------------讲一个基因的解码转换成需要的chrom_nu和chrom_gamma-------------
-    def indiviToNuGamma(self,deco_individual, chrom_nu,chrom_gamma):
+    def  indiviToCorS(self,deco_individual, chrom_nu,chrom_gamma):
         aNuGa = []
         the_nu = 0 + deco_individual[0] * ((1 - (0)) / (math.pow(2, chrom_nu) - 1))
         the_gamma = 0 + deco_individual[1] * ((10 - (0)) / (math.pow(2, chrom_gamma) - 1))
@@ -76,7 +76,7 @@ class GA:
         for i in range(len(temp_deco)):  # temp1的长度和种群的个数是一致的
             # 得到的值需要进行处理在进行使用，要区分出nu和gamma
             # nu的范围是（0,1），对应的长度应该是：10^3*（1-（0）） = 1*10^3 =2^10
-            # gamma的范围是（0，10）对应的长度应该是：10^3*（10-0） = 10^4 = 2^13
+            # gamma的范围是（0，10）对应的长度应该是：10^3*（10-0） = 10^4 = 2^14
             the_nu = 0 + temp_deco[i][0] * ((1 - (0)) / (math.pow(2, chrom_nu) - 1))
             the_gamma = 0 + temp_deco[i][1] * ((10 - (0)) / (math.pow(2, chrom_gamma) - 1))
             if(the_nu == 0):
@@ -227,9 +227,9 @@ class GA:
     def funGA(self,psize,pmat,pvar,numItera):
         pop_size = psize  # 种群数量
         max_value = 10  # 基因中允许出现的最大值
-        chrom_length = 23  # 染色体长度（10+13）
+        chrom_length = 24  # 染色体长度（10+13）
         chrom_nu = 10
-        chrom_gamma = 13
+        chrom_gamma = 14
         p_mat = pmat  # 交配概率
         p_var = pvar  # 变异概率
         results = []  # 存储每一代的最优解，N个二元组
@@ -265,7 +265,7 @@ class GA:
         # results.sort()
         fin_val_ind = results[results.index(max(results))]
         fin_deco = self.oneDecodeChrom(fin_val_ind[1], chrom_length, chrom_nu, chrom_gamma)
-        fin_Nu_Ga = self.indiviToNuGamma(fin_deco,chrom_nu,chrom_gamma)
+        fin_Nu_Ga = self. indiviToCorS(fin_deco,chrom_nu,chrom_gamma)
         print('迭代完成后最好的准确率是：',fin_val_ind[0],'最好的基因是：',
               fin_val_ind[1],'得到的最好的the_nu是：',fin_Nu_Ga[0],'the_gamma是：',fin_Nu_Ga[1])
 
