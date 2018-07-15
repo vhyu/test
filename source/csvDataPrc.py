@@ -10,7 +10,7 @@ class csvDataPrc():
     def __init__(self,the_FP):
         self.csvFilePath = the_FP
 
-    #读取csv文件，并将每一行的数据进行处理，得到的是点击信息的集合
+    #读取csv文件，并将每一行的数据进行处理，得到的是点击信息的集合，其实并不是存储店的信息，只是为了过滤掉不是event1的那些事件
     def CSVResolve(self):
         with open(self.csvFilePath, "r", encoding="utf-8") as f:
             reader = csv.reader(f)
