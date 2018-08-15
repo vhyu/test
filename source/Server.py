@@ -13,7 +13,7 @@ from source.gentic_algorithm import GA as ga
 #服务器ip地址
 HOST = '202.199.6.212'
 #服务器端口
-PORT = 2048
+PORT = 2049
 
 class TCPhandler(socketserver.BaseRequestHandler):
     # LastPid = 'lasePid'
@@ -66,32 +66,47 @@ class TCPhandler(socketserver.BaseRequestHandler):
             # get user_id and file_length
             # len,userid,Touch,2018-06-04 09:31:23,0,SYN_REPORT,cn.nubia.launcher
             self.header = self.request.recv(1024)
+            print("self.header:")
             print(self.header)
             self.header = self.header.decode()
-            self.header = self.header.split(',')
+            self.header = self.header.split('\r\n')
             recordlen = int(self.header[0])
+            print("self.header[0]:")
+            print(recordlen)
             userid = self.header[1]
-            record = self.header[2]+','+self.header[3]+','+self.header[4]+','+self.header[5]+','+self.header[6]
-            # ACK
-            # self.request.send("header ok\r\n".encode())
-            # print("\033[0;31m%s\033[0m" % "    Header ok", recordlen,
-            #       "  userid", userid)
+            print("self.header[1]:")
+            print(userid)
 
-            print("the record is :",record," !!!!")
+            # ACK
+            self.request.send("header ok \r\n".encode())
+            print("\033[0;31m%s\033[0m" % "Header  ok! len:", recordlen,"   userid:",userid)
+
+            recordCon = bytes()
+            while recordlen >0:
+                data = self.request.recv(recordlen)
+                recordlen -= len(data)
+                recordCon = recordCon + data
+                # self.header[2]+','+self.header[3]+','+self.header[4]+','+self.header[5]+','+self.header[6]
+            recordCon = recordCon.decode()
+            recordConList = recordCon.split('\n')
+            recordCon = recordConList[0]
+            print(recordCon)
             print(time.strftime('%Y-%m-%d %H:%M:%S'), "record recv finished")
+
             #获取当前记录的PId
-            recordList = record.split(',')#将pid后边的空格去掉
+            recordList = recordCon.split(',')#将pid后边的空格去掉
             print(recordList)
             Pid = recordList[4]
             # 提取出pid
-            Pid = Pid.replace("\r\n","")
+            # Pid = Pid.replace("\r\n","")
             print('Pid is :',Pid)
-            record = record+'\r\n'
+            # record = recordCon+'\r\n'
             # # 第一次获取到LastPid,只做一次
             # if (self.flag):
             #     self.flag = False
             #     self.LastPid= Pid
             # 记录上一条pid
+            recordCon = recordCon+"\n"
 
             # 判断相关目录是否存在
             if not os.path.exists('../'+userid+'_best_modles/'):
@@ -138,7 +153,7 @@ class TCPhandler(socketserver.BaseRequestHandler):
                 else:
                     # 预测集没有达到符合的大小
                     print("追加到预测集文件中")
-                    predict_file.write(record)
+                    predict_file.write(recordCon)
                 predict_file.close()
             else:
                 #模型不存在，进行训练
@@ -169,7 +184,7 @@ class TCPhandler(socketserver.BaseRequestHandler):
                 else:
                     #追加到训练集中
                     train_file = open(trainFileName, 'a+')
-                    train_file.write(record)
+                    train_file.write(recordCon)
                     print("追加到训练集数据")
                     train_file.close()
 
