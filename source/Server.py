@@ -196,5 +196,3 @@ class TCPhandler(socketserver.BaseRequestHandler):
 if __name__ == '__main__':
     server = socketserver.ThreadingTCPServer((HOST, PORT), TCPhandler)
     server.serve_forever()
-
-#下一步：从安卓上发送文件、接口并接收训练的数据文件并保存文件
