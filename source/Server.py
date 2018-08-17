@@ -82,7 +82,7 @@ class TCPhandler(socketserver.BaseRequestHandler):
             print("\033[0;31m%s\033[0m" % "Header  ok! len:", recordlen,"   userid:",userid)
 
             recordCon = bytes()
-            while recordlen >0:
+            while recordlen > 0:
                 data = self.request.recv(recordlen)
                 recordlen -= len(data)
                 recordCon = recordCon + data
@@ -122,47 +122,72 @@ class TCPhandler(socketserver.BaseRequestHandler):
             module_file = '../'+userid+'_best_modles/'+Pid+'_model.m'
             predictFlieName = '../' + userid + '_predict_files/' + Pid + '.csv'
             trainFileName = '../' + userid + '_train_files/' + Pid + '.csv'
+
             print(module_file)
 
             if(os.path.exists(module_file)):
                 #     模型存在，进行预测
                 print("module 存在")
                 # 获取当前文件的行数!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!一直是0
-                predict_file = open(predictFlieName,'a+')
-                self.Pre_currentRecord = len(predict_file.readline())
-                #   判断是否满足预测的文件的要求（达到8条数据或是上一条pid与本次pid不同）
+
+                # 首先判断是否存在文件
+                #     why 不使用open（，"w"）呢，这个可以不存在自动创建，但是如果存在读不了行数
+                if(not os.path.isfile(predictFlieName)):
+                    open(predictFlieName,"w").close()
+
+                predict_file = open(predictFlieName)
+                self.Pre_currentRecord = len(predict_file.readlines())
+                predict_file.close()
+
+                print("当前预测集记录数目：")
+                print(self.Pre_currentRecord)
+                #   判断是否满足预测的文件的要求（达到8条数据）
                 if(self.Pre_currentRecord>=8):
                     print("进行预测")
-                    #    将预测集文件传入
+                    # 将预测集文件传入
                     # 对预测集文件进行处理,得到数据集
                     myTestCsvDP = csvDP(predictFlieName)
                     myTestCsvDP = myTestCsvDP.set()
 
                     # 调用模型进行相应的预测
-                    clf = joblib.loadM(module_file)
-                    fina_result = clf.predict(myTestCsvDP)
-                    print('fina_result')
-                    print(fina_result)
-                    self.Pre_currentRecord = 0
-                    predictFlieName.seek(0)
-                    predictFlieName.truncate()   #清空文件
-                    if(fina_result == -1):
+                    clf = joblib.load(module_file)
+                    # 得到的预测结果是一个数组，但是我们期望的是仅仅含有一个元素的数组
+                    # 所以，我们这样判断，假若数组中含有一个-1的话那么即为非法，也就是我们不容许有非法的
+                    pre_result = clf.predict(myTestCsvDP)
+
+                    # 非法用户
+                    if -1 in pre_result:
                         self.res = 'illegal'
-                #    预测完成后将文件清空
-                        predict_file.truncate()
+
+                    # 清空文件需要先打开文件
+                    predict_file = open(predictFlieName, "w")
+                    predict_file.seek(0)
+                    predict_file.truncate()  # 清空文件
+                    predict_file.close()
+
                 else:
                     # 预测集没有达到符合的大小
                     print("追加到预测集文件中")
+                    predict_file = open(predictFlieName,"a+")
                     predict_file.write(recordCon)
-                predict_file.close()
+                    predict_file.close()
             else:
                 #模型不存在，进行训练
                 print('module no exist')
-                # 从当前的训练集文件中加载record数目
-                train_file = open(trainFileName,'a+')
+                # 从当前的训练集文件中加载record数目,
+                # ！！！！！！！！！！！！！以"a+"的形式打开读到文件的行数为0
+                # ！！！！！！！所以读取文件行数，先打开在关闭，再以a+的形式追加
+
+                # 首先判断是否存在文件
+                #     why 不使用open（，"w"）呢，这个可以不存在自动创建，但是如果存在读不了行数
+                if (not os.path.isfile(trainFileName)):
+                    open(trainFileName, "w").close()
+
+                train_file = open(trainFileName)
                 self.Train_currentRecord = len(train_file.readlines())
                 train_file.close()
                 # 判断训练集的个数，达到2000条开始训练
+                print("当前训练集文件的记录数目:")
                 print(self.Train_currentRecord)
                 if(self.Train_currentRecord>2000):
                     #开始训练
@@ -171,14 +196,19 @@ class TCPhandler(socketserver.BaseRequestHandler):
                     # 对数据进行处理，得到真正的数据集CSVData
                     print('对record进行处理得到数据集data')
                     Val_data = csvDP(trainFileName)
+                    # print(type(Val_data))
                     Valiable_Data = Val_data.set()
+                    # print(type(Valiable_Data))
                     # 将数据集划分成TrainD和TestD ，留出法，随机的选择百分之30作为测试集
+                    #需要改动，这个数据取的不好
                     print('将数据集用“留出法”来进行处理，划分成训练集和测试集')
-                    TrainD = Valiable_Data[0,100]
-                    TestD = Valiable_Data[100:]
+                    total = len(Valiable_Data)
+                    TrainD = Valiable_Data[0:int(0.3*total)]
+                    TestD = Valiable_Data[int(0.3*total):]
+
                     # 调用GA_OCSVM
-                    theGa=ga(TrainD,TestD,userid,Pid)
-                    # 训练并保存模型
+                    theGa = ga(TrainD, TestD, userid, Pid)
+                    # 训练并保存模型,对于GA的一个参数的初始状态，是自己设置的，可以再调节
                     theGa.funGA(20,0.5,0.6,100)
                     print("训练以及保存模型")
                 else:

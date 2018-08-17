@@ -1,10 +1,8 @@
-Touch,2018-06-04 09:31:23,5,ABS_MT_PRESSURE,cn.nubia.launcherTouch,2018-06-04 09:31:23,5,ABS_MT_PRESSURE,cn.nubia.launcherTouch,2018-06-04 09:31:23,5,ABS_MT_PRESSURE,cn.nubia.launcherTouch,2018-08-15 15:51:37:037,907,ABS_MT_POSITION_X,cn.nubia.launcherTouch,2018-08-15 15:51:37:037,6,ABS_MT_PRESSURE,cn.nubia.launcherTouch,2018-08-15 15:52:04:004,0,SYN_REPORT,cn.nubia.launcherTouch,2018-08-15 16:03:23:023,1190,ABS_MT_POSITION_Y,cn.nubia.launcherTouch,2018-08-15 16:10:26:026,0,SYN_REPORT,cn.nubia.launcher
-Touch,2018-08-15 16:10:26:026,14650,ABS_MT_TRACKING_ID,cn.nubia.launcher
-Touch,2018-08-15 16:10:27:027,7,ABS_MT_PRESSURE,cn.nubia.launcher
-Touch,2018-08-15 16:10:47:047,877,ABS_MT_POSITION_Y,cn.nubia.launcher
-Touch,2018-08-15 16:10:47:047,0,SYN_REPORT,cn.nubia.launcher
-Touch,2018-08-15 16:10:54:054,UP,KEY_POWER,cn.nubia.launcher
-Touch,2018-08-15 16:10:55:055,0,SYN_REPORT,cn.nubia.launcher
-Touch,2018-08-15 16:13:30:030,DOWN,BTN_TOUCH,cn.nubia.launcher
-Touch,2018-08-15 16:17:28:028,0,SYN_REPORT,cn.nubia.launcher
-Touch,2018-08-15 16:17:28:028,14727,ABS_MT_TRACKING_ID,cn.nubia.launcher
+Touch,2018-08-17 20:39:18:018,DOWN,BTN_TOUCH,cn.nubia.launcher
+Touch,2018-08-17 20:39:19:019,772,ABS_MT_POSITION_X,cn.nubia.launcher
+Touch,2018-08-17 20:39:24:024,1885,ABS_MT_POSITION_Y,cn.nubia.launcher
+Touch,2018-08-17 20:39:25:025,758,ABS_MT_POSITION_X,cn.nubia.launcher
+Touch,2018-08-17 20:39:25:025,714,ABS_MT_POSITION_X,cn.nubia.launcher
+Touch,2018-08-17 20:40:08:008,0,SYN_REPORT,cn.nubia.launcher
+Touch,2018-08-17 20:40:11:011,675,ABS_MT_POSITION_X,cn.nubia.launcher
+Touch,2018-08-17 20:40:12:012,DOWN,BTN_TOOL_FINGER,cn.nubia.launcher

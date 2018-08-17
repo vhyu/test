@@ -1,2 +1,7 @@
-Touch,2018-08-15 16:17:25:025,9,ABS_MT_PRESSURE,com.tencent.mm
-Touch,2018-08-15 16:17:26:026,UP,BTN_TOOL_FINGER,com.tencent.mm
+Touch,2018-08-17 20:26:14:014,UP,BTN_TOOL_FINGER,com.tencent.mm
+Touch,2018-08-17 20:26:14:014,4,ABS_MT_PRESSURE,com.tencent.mm
+Touch,2018-08-17 20:38:57:057,0,SYN_REPORT,com.tencent.mm
+Touch,2018-08-17 20:39:21:021,818,ABS_MT_POSITION_Y,com.tencent.mm
+Touch,2018-08-17 20:39:21:021,1096,ABS_MT_POSITION_Y,com.tencent.mm
+Touch,2018-08-17 20:39:21:021,0,SYN_REPORT,com.tencent.mm
+Touch,2018-08-17 20:39:22:022,0,SYN_REPORT,com.tencent.mm
