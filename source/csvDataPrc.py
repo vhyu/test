@@ -10,6 +10,13 @@ class csvDataPrc():
     def __init__(self,the_FP):
         self.csvFilePath = the_FP
 
+    def sub(self,string, p, c):
+        new = []
+        for s in string:
+            new.append(s)
+        new[p] = c
+        return ''.join(new)
+
     #读取csv文件，并将每一行的数据进行处理，得到的是点击信息的集合，其实并不是存储店的信息，只是为了过滤掉不是event1的那些事件
     def CSVResolve(self):
         with open(self.csvFilePath, "r", encoding="utf-8") as f:
@@ -20,7 +27,8 @@ class csvDataPrc():
         for row in rows:
             # 创建字典
             aClick = dict.fromkeys(['Time', 'x', 'y', 'pressure', 'total_seconds', 'process_id','event_type','fingers'], 0)
-            aClick['Time'] = datetime.datetime.strptime(row[1], "%Y-%m-%d %H:%M:%S")
+            strTime = self.sub(row[1],19,'.')
+            aClick['Time'] = datetime.datetime.strptime(strTime, "%Y-%m-%d %H:%M:%S.%f")
             vali = 0
             aClick['fingers'] = 0
             aClick['process_id'] = row[4]
@@ -65,7 +73,8 @@ class csvDataPrc():
             #     click_info[End_click + 1]['Time'] - click_info[Start_click]['Time']).total_seconds() <= 1:
             # 现在获取到的就是毫秒级的
             # 由于下边这个操作，所以到值得到的duration一定是1，因为time这个字段是以秒为单位，现在需要的是获得毫秒就好了
-            while End_click + 1 < len(click_info) and (click_info[End_click + 1]['event_type'] == "UP" and click_info[Start_click]['btn_tool_finger']=="DOWN"):
+            # while End_click + 1 < len(click_info) and (click_info[End_click + 1]['event_type'] == "UP" and click_info[Start_click]['btn_tool_finger']=="DOWN"):
+            while End_click + 1 < len(click_info) and (click_info[End_click + 1]['event_type'] == "UP" and click_info[Start_click]['event_type']=="DOWN"):
                 End_click = End_click + 1
                 if End_click == len(click_info) - 1:
                     break
@@ -76,7 +85,7 @@ class csvDataPrc():
 
             # one_operation表示一个操作的数据信息
             one_operation = dict.fromkeys(
-                    ['Time', 'Start_x', 'Start_y', 'End_x', 'End_y', 'Avg_Pressure', 'Duration', 'numbers','fingers'], 0)
+                    ['Time', 'Start_x', 'Start_y', 'End_x', 'End_y', 'Avg_Pressure', 'Duration', 'Numbers', 'Fingers'], 0)
             one_operation['Duration'] = (
                     click_info[End_click]['Time'] - click_info[Start_click]['Time']).total_seconds()
             one_operation['Time'] = click_info[Start_click]['Time']
@@ -95,7 +104,7 @@ class csvDataPrc():
                     break
 
             for k in range(End_click, Start_click, -1):
-                if click_info['y'] != 0:
+                if click_info[k]['y'] != 0:
                     one_operation['End_y'] = click_info[k]['y']
                     break
 
@@ -104,7 +113,7 @@ class csvDataPrc():
             else:
                 one_operation['Avg_Pressure'] = 0
             one_operation['Numbers'] = End_click
-            one_operation['fingers'] = click_info[Start_click]['fingers']
+            one_operation['Fingers'] = click_info[Start_click]['fingers']
             # operation_info 表示的是一个pid中对应的所有的operation的集合
             operation_info.append(copy.deepcopy(one_operation))
             i = End_click + 1
@@ -123,6 +132,11 @@ class csvDataPrc():
         Numbers = []
         num_N = [x['Numbers'] for x in operation_data]
 
+        # num_N为空的情况是什么样的，不知道？？？
+        if not num_N:
+            num_N = [1, 1, 1]
+            # print("num_N is empty")
+
         if (max(num_N) - min(num_N)) != 0:
             for i in range(len(operation_data)):
                 Numbers.append((operation_data[i]['Numbers'] - min(num_N)) / (max(num_N) - min(num_N)))
@@ -133,6 +147,11 @@ class csvDataPrc():
         # 得到record中的pressure（归一化）
         pre = []
         num_P = [x['Avg_Pressure'] for x in operation_data]
+        # num_P为空的情况是什么样的，不知道？？？与num_N是对应的
+        if not num_P:
+            num_P = [1, 1, 1]
+            # print("num_N is empty")
+
         if (max(num_P) - min(num_P)) != 0:
             for i in range(len(operation_data)):
                 pre.append((operation_data[i]['Avg_Pressure'] - min(num_P)) / (max(num_P) - min(num_P)))

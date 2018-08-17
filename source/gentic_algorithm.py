@@ -84,7 +84,10 @@ class GA:
             if(the_gamma == 0):
                 the_gamma = 0.0001
             cls_Fit = cfit(self.myTrainCsvDP,self.myTestCsvDP,self.uId,self.pId,the_nu,the_gamma)
-            obj_value.append(cls_Fit.pred(cls_Fit.fit()))
+            cls_Fit.fit()
+            obj_value.append(cls_Fit.pred())
+
+
         return obj_value
 
 
@@ -213,8 +216,8 @@ class GA:
         # 测试保存的模型
         # 加载模型
         cls_Fit = cfit(self.myTrainCsvDP,self.myTestCsvDP,self.uId,self.pId)
-        load_mod = cls_Fit.loadM()
-        print('使用已经保存的模型去训练得到的准确率：', cls_Fit.pred(load_mod))
+        cls_Fit.loadM()
+        print('使用已经保存的模型去训练得到的准确率：', cls_Fit.pred())
 
 
     #--------------训练以及保存模型-------------
@@ -265,7 +268,7 @@ class GA:
         # results.sort()
         fin_val_ind = results[results.index(max(results))]
         fin_deco = self.oneDecodeChrom(fin_val_ind[1], chrom_length, chrom_nu, chrom_gamma)
-        fin_Nu_Ga = self. indiviToCorS(fin_deco,chrom_nu,chrom_gamma)
+        fin_Nu_Ga = self.indiviToCorS(fin_deco,chrom_nu,chrom_gamma)
         print('迭代完成后最好的准确率是：',fin_val_ind[0],'最好的基因是：',
               fin_val_ind[1],'得到的最好的the_nu是：',fin_Nu_Ga[0],'the_gamma是：',fin_Nu_Ga[1])
 
@@ -275,7 +278,8 @@ class GA:
         #训练模型，得到一个clf
         #保存模型
         ####注意如果没有当前的目录，则不会自动创建目录
-        cls_Fit.saveM(cls_Fit.fit())
+        cls_Fit.fit()
+        cls_Fit.saveM()
 
 
 
