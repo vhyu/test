@@ -1,0 +1,36 @@
+import timeit,os
+
+
+def sub(string, p, c):
+    new = []
+    for s in string:
+        new.append(s)
+    new[p] = c
+    return ''.join(new)
+
+def linecount_1():
+    file = open('../test_predict_files/com.liulishuo.engzo.csv')
+    len1 = len(file.readlines())
+    file.close()
+    a = sub("2018-08-17 14:53:19:019",19,'.')
+    print(a)
+    print(type(a))
+    return len1#最直接的方法
+
+def linecount_2():
+    count = -1 #让空文件的行号显示0
+    for count,line in enumerate(open('data.sql')): pass
+    #enumerate格式化成了元组,count就是行号,因为从0开始要+1
+    return count+1
+
+def linecount_3():
+    count = 0
+    thefile = open('data.sql','rb')
+    while 1:
+        buffer = thefile.read(65536)
+        if not buffer:break
+        count += buffer.count('\n')#通过读取换行符计算
+    return count
+
+for f in linecount_1,linecount_2,linecount_3:
+    print(linecount_1())
