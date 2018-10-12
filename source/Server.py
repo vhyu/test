@@ -2,7 +2,7 @@
 #! python36
 #在Python2中是首字母大写的
 import socketserver
-import time
+import time,sys
 import socket, struct, os
 from sklearn import svm
 from sklearn.externals import joblib
@@ -11,7 +11,7 @@ from source.csvDataPrc import csvDataPrc as csvDP
 from source.gentic_algorithm import GA as ga
 # from source.gentic_algorithm import *
 #服务器ip地址
-HOST = '202.199.6.212'
+HOST = '202.199.13.181'
 #服务器端口
 PORT = 2049
 
@@ -20,7 +20,7 @@ class TCPhandler(socketserver.BaseRequestHandler):
     # flag=True
     Pre_currentRecord=0
     Train_currentRecord= 0
-    res = 'legal'
+    res = 'legal\n'
     def handle(self):
         print("\033[0;31m%s\033[0m" % "Connected by", self.client_address)
         print('connected from:', self.client_address)
@@ -70,7 +70,12 @@ class TCPhandler(socketserver.BaseRequestHandler):
             print(self.header)
             self.header = self.header.decode()
             self.header = self.header.split('\r\n')
-            recordlen = int(self.header[0])
+            print(self.header)
+            if self.header[0]:
+                recordlen = int(self.header[0])
+            else:
+                recordlen = 0
+                continue
             print("self.header[0]:")
             print(recordlen)
             userid = self.header[1]
@@ -142,7 +147,7 @@ class TCPhandler(socketserver.BaseRequestHandler):
                 print("当前预测集记录数目：")
                 print(self.Pre_currentRecord)
                 #   判断是否满足预测的文件的要求（达到8条数据）
-                if(self.Pre_currentRecord>=8):
+                if(self.Pre_currentRecord>=20):
                     print("进行预测")
                     # 将预测集文件传入
                     # 对预测集文件进行处理,得到数据集
@@ -154,15 +159,17 @@ class TCPhandler(socketserver.BaseRequestHandler):
                     # 得到的预测结果是一个数组，但是我们期望的是仅仅含有一个元素的数组
                     # 所以，我们这样判断，假若数组中含有一个-1的话那么即为非法，也就是我们不容许有非法的
                     pre_result = clf.predict(myTestCsvDP)
+                    print("当前预测集结果数组：")
+                    print(pre_result)
 
                     # 非法用户
                     if -1 in pre_result:
-                        self.res = 'illegal'
+                        self.res = 'illegal\n'
 
                     # 清空文件需要先打开文件
                     predict_file = open(predictFlieName, "w")
                     predict_file.seek(0)
-                    predict_file.truncate()  # 清空文件
+                    predict_file.truncate()  # 清空预测集文件
                     predict_file.close()
 
                 else:
@@ -189,9 +196,13 @@ class TCPhandler(socketserver.BaseRequestHandler):
                 # 判断训练集的个数，达到2000条开始训练
                 print("当前训练集文件的记录数目:")
                 print(self.Train_currentRecord)
-                if(self.Train_currentRecord>2000):
+                if(self.Train_currentRecord>1000):
                     #开始训练
-                    print('开始训练')
+                    print('开始训练time')
+                    timeoutputfile = open('timeSave.txt','a')
+                    print(time.localtime(time.time()),timeoutputfile)
+                    timeoutputfile.close()
+
                     print('保存模型')
                     # 对数据进行处理，得到真正的数据集CSVData
                     print('对record进行处理得到数据集data')
@@ -209,8 +220,12 @@ class TCPhandler(socketserver.BaseRequestHandler):
                     # 调用GA_OCSVM
                     theGa = ga(TrainD, TestD, userid, Pid)
                     # 训练并保存模型,对于GA的一个参数的初始状态，是自己设置的，可以再调节
-                    theGa.funGA(20,0.5,0.6,100)
-                    print("训练以及保存模型")
+                    theGa.funGA(100,0.5,0.6,200)
+                    print("训练以及保存模型time")
+                    timeoutputfile = open('timeSave.txt', 'a')
+                    print(time.localtime(time.time()), timeoutputfile)
+                    timeoutputfile.close()
+
                 else:
                     #追加到训练集中
                     train_file = open(trainFileName, 'a+')
