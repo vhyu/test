@@ -27,7 +27,7 @@ class csvDataPrc():
         for row in rows:
             # 创建字典
             aClick = dict.fromkeys(['Time', 'x', 'y', 'pressure', 'total_seconds', 'process_id','event_type','fingers'], 0)
-            strTime = self.sub(row[1],19,'.')
+            strTime = self.sub(row[1], 19, '.')
             aClick['Time'] = datetime.datetime.strptime(strTime, "%Y-%m-%d %H:%M:%S.%f")
             vali = 0
             aClick['fingers'] = 0
@@ -50,6 +50,9 @@ class csvDataPrc():
             if vali:
                 clicks_info.append(aClick)
         self.csvR = clicks_info
+    #此格式为
+    #[['Time', 'x', 'y', 'pressure', 'total_seconds', 'process_id','event_type','fingers'],['Time', 'x', 'y', 'pressure', 'total_seconds', 'process_id','event_type','fingers']]
+
 
     #将从csv中读取到的点击信息的dic数组进行处理
     #得到的是每一个动作的数据的集合
@@ -85,7 +88,7 @@ class csvDataPrc():
 
             # one_operation表示一个操作的数据信息
             one_operation = dict.fromkeys(
-                    ['Time', 'Start_x', 'Start_y', 'End_x', 'End_y', 'Avg_Pressure', 'Duration', 'Numbers', 'Fingers'], 0)
+                ['Time', 'Start_x', 'Start_y', 'End_x', 'End_y', 'Avg_Pressure', 'Duration', 'Numbers', 'Fingers'], 0)
             one_operation['Duration'] = (
                     click_info[End_click]['Time'] - click_info[Start_click]['Time']).total_seconds()
             one_operation['Time'] = click_info[Start_click]['Time']
@@ -97,12 +100,10 @@ class csvDataPrc():
                 if click_info[k]['y'] != 0:
                     one_operation['Start_y'] = click_info[k]['y']
                     break
-
             for k in range(End_click, Start_click, -1):
                 if click_info[k]['x'] != 0:
                     one_operation['End_x'] = click_info[k]['x']
                     break
-
             for k in range(End_click, Start_click, -1):
                 if click_info[k]['y'] != 0:
                     one_operation['End_y'] = click_info[k]['y']
@@ -120,6 +121,8 @@ class csvDataPrc():
             # 得到每一个pid对应的one_operation(也就是得到每一个pid对应的不同的操作)
             # 返回的是一个关于操作们的数组
         self.fileR = operation_info
+        # 此格式为
+        # [['Time', 'Start_x', 'Start_y', 'End_x', 'End_y', 'Avg_Pressure', 'Duration', 'Numbers', 'Fingers'],['Time', 'Start_x', 'Start_y', 'End_x', 'End_y', 'Avg_Pressure', 'Duration', 'Numbers', 'Fingers']]
 
         # 找到这一条记录中的数据
 
@@ -176,6 +179,9 @@ class csvDataPrc():
         for i in range(len(operation_data)):
             trainData.append([Numbers[i], pre[i], sx[i], sy[i], ex[i], ey[i]])
         self.dataR = trainData
+        # 归一化之后的
+        # 此格式为
+        # [[Numbers[i], pre[i], sx[i], sy[i], ex[i], ey[i]],[Numbers[i], pre[i], sx[i], sy[i], ex[i], ey[i]]]
 
     def set(self):
         self.CSVResolve()
