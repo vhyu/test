@@ -281,8 +281,6 @@ class GA:
         cls_Fit.fit()
         cls_Fit.saveM()
 
-
-
         #画图
         for i in range(len(results)):
             X.append(i)
@@ -291,6 +289,8 @@ class GA:
 
         plt.plot(X, Y)
         plt.title(self.uId+"\\"+self.pId)
+        plt.savefig('../Iterative200_pop100_pngs/'+self.uId+"_"+self.pId + '.png')
+        # plt.hold('on')
         plt.show()
             #
             # 保存的一片空白，其实产生这个现象的原因很简单：
