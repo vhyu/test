@@ -2,7 +2,7 @@
 #! python36
 #在Python2中是首字母大写的
 import socketserver
-import time,sys
+import time,sys,datetime
 import socket, struct, os
 from sklearn import svm
 from sklearn.externals import joblib
@@ -11,9 +11,10 @@ from source.csvDataPrc import csvDataPrc as csvDP
 from source.gentic_algorithm import GA as ga
 # from source.gentic_algorithm import *
 #服务器ip地址
-HOST = '202.199.13.181'
+HOST = '219.216.65.188'
 #服务器端口
-PORT = 2049
+PORT = 4554
+
 
 class TCPhandler(socketserver.BaseRequestHandler):
     # LastPid = 'lasePid'
@@ -21,9 +22,13 @@ class TCPhandler(socketserver.BaseRequestHandler):
     Pre_currentRecord=0
     Train_currentRecord= 0
     res = 'legal\n'
+
     def handle(self):
         print("\033[0;31m%s\033[0m" % "Connected by", self.client_address)
-        print('connected from:', self.client_address)
+
+        print(datetime.datetime.now().strftime('%Y %m %d %H:%M:%S:%f'))
+        #print('connected from:', self.client_address)
+        print('test用户连接成功！')
 
         # # 定义文件信息。128s表示文件名为128bytes长，l表示一个int或log文件类型，在此为文件大小
         # fileinfo_size = struct.calcsize('128sl')
@@ -66,25 +71,25 @@ class TCPhandler(socketserver.BaseRequestHandler):
             # get user_id and file_length
             # len,userid,Touch,2018-06-04 09:31:23,0,SYN_REPORT,cn.nubia.launcher
             self.header = self.request.recv(1024)
-            print("self.header:")
-            print(self.header)
+            # print("self.header:")
+            # print(self.header)
             self.header = self.header.decode()
             self.header = self.header.split('\r\n')
-            print(self.header)
+            # print(self.header)
             if self.header[0]:
                 recordlen = int(self.header[0])
             else:
                 recordlen = 0
                 continue
             print("self.header[0]:")
-            print(recordlen)
+            # print(recordlen)
             userid = self.header[1]
-            print("self.header[1]:")
-            print(userid)
+            # print("self.header[1]:")
+            # print(userid)
 
             # ACK
             self.request.send("header ok \r\n".encode())
-            print("\033[0;31m%s\033[0m" % "Header  ok! len:", recordlen,"   userid:",userid)
+            # print("\033[0;31m%s\033[0m" % "Header  ok! len:", recordlen,"   userid:",userid)
 
             recordCon = bytes()
             while recordlen > 0:
@@ -95,8 +100,9 @@ class TCPhandler(socketserver.BaseRequestHandler):
             recordCon = recordCon.decode()
             recordConList = recordCon.split('\n')
             recordCon = recordConList[0]
+            print("接收到的内容为：")
             print(recordCon)
-            print(time.strftime('%Y-%m-%d %H:%M:%S'), "record recv finished")
+            print(datetime.datetime.now().strftime('%H:%M:%S.%f'), "record recv finished")
 
             #获取当前记录的PId
             recordList = recordCon.split(',')#将pid后边的空格去掉
@@ -133,6 +139,7 @@ class TCPhandler(socketserver.BaseRequestHandler):
             if(os.path.exists(module_file)):
                 #     模型存在，进行预测
                 print("module 存在")
+
                 # 获取当前文件的行数!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!一直是0
 
                 # 首先判断是否存在文件
@@ -162,8 +169,9 @@ class TCPhandler(socketserver.BaseRequestHandler):
                     print("当前预测集结果数组：")
                     print(pre_result)
 
-                    # 非法用户
-                    if -1 in pre_result:
+                    # 非法用户(改成了一半以上的-1就认定为非法用户)
+                    nums_error = pre_result[pre_result == -1].size
+                    if nums_error >= 0.5*(pre_result.size):
                         self.res = 'illegal\n'
 
                     # 清空文件需要先打开文件
@@ -180,7 +188,7 @@ class TCPhandler(socketserver.BaseRequestHandler):
                     predict_file.close()
             else:
                 #模型不存在，进行训练
-                print('module no exist')
+                print('模型不存在')
                 # 从当前的训练集文件中加载record数目,
                 # ！！！！！！！！！！！！！以"a+"的形式打开读到文件的行数为0
                 # ！！！！！！！所以读取文件行数，先打开在关闭，再以a+的形式追加
@@ -196,11 +204,12 @@ class TCPhandler(socketserver.BaseRequestHandler):
                 # 判断训练集的个数，达到2000条开始训练
                 print("当前训练集文件的记录数目:")
                 print(self.Train_currentRecord)
-                if(self.Train_currentRecord>1000):
+                if(self.Train_currentRecord>2000):
                     #开始训练
                     print('开始训练time')
                     timeoutputfile = open('timeSave.txt','a')
-                    print(time.localtime(time.time()),timeoutputfile)
+                    startTime = datetime.datetime.now().strftime('%H:%M:%S.%f')
+                    print(datetime.datetime.now().strftime('%H:%M:%S.%f'),timeoutputfile)
                     timeoutputfile.close()
 
                     print('保存模型')
@@ -220,10 +229,14 @@ class TCPhandler(socketserver.BaseRequestHandler):
                     # 调用GA_OCSVM
                     theGa = ga(TrainD, TestD, userid, Pid)
                     # 训练并保存模型,对于GA的一个参数的初始状态，是自己设置的，可以再调节
-                    theGa.funGA(100,0.5,0.6,200)
+                    theGa.funGA(100,0.5,0.6,100)
                     print("训练以及保存模型time")
                     timeoutputfile = open('timeSave.txt', 'a')
-                    print(time.localtime(time.time()), timeoutputfile)
+                    print(datetime.datetime.now().strftime('%H:%M:%S.%f'), timeoutputfile)
+                    endTime = datetime.datetime.now().strftime('%H:%M:%S.%f')
+                    timeSum = endTime-startTime
+                    print("训练时间:")
+                    print(timeSum)
                     timeoutputfile.close()
 
                 else:
@@ -233,10 +246,10 @@ class TCPhandler(socketserver.BaseRequestHandler):
                     print("追加到训练集数据")
                     train_file.close()
 
-            print("res_respond:", "\033[0;31m%s\033[0m" % self.res)
+            print("响应消息为:", "\033[0;31m%s\033[0m" % self.res)
             #send the predict_results
             self.request.send((self.res).encode())
-            print("send is ok!!!!")
+            print("响应消息发送成功!")
 
 if __name__ == '__main__':
     server = socketserver.ThreadingTCPServer((HOST, PORT), TCPhandler)
